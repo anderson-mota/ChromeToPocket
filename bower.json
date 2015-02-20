@@ -1,0 +1,20 @@
+{
+  "name": "PocketImporter",
+  "version": "0.0.0",
+  "authors": [
+    "Anderson Mota <anderson.mota12@gmail.com>"
+  ],
+  "main": "index.html",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap-sass": "~3.3.3",
+    "Font-Awesome": "~4.3.0"
+  }
+}
