@@ -84,4 +84,9 @@ node_modules
 
 bower_components
 
+# Cloud9
 .c9
+
+# Composer
+composer.lo
+vendor
