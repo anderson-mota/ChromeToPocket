@@ -11,22 +11,16 @@
             <div class="col-lg-12">
                 <h1>Chrome Bookmarks to Pocket</h1>
                 <div class="well clearfix">
+                    {% if access_token %}
                     <form action="" class="">
                         <div class="form-group">
                             <label for="inputImporter">Arquivo para importação:</label>
                             <input type="file" name="importer" id="inputImporter"/>
                         </div>
                     </form>
-                    <form id="pocketAuthorize" class="pull-right" action="https://getpocket.com/auth/authorize" method="post">
-                        <button class="btn btn-default" type="submit">Pocket Authentication</button>
-                        <input type="hidden" name="redirect_uri" value="https://chrometopocket-anderson-mota.c9.io/"/>
-                        <input type="hidden" name="request_token" value="ea702271-f5b5-55ef-e47c-2fffff"/>
-                    </form>
-                    <form id="pocketRequest" class="pull-right hide" action="https://getpocket.com/v3/oauth/request" method="post">
-                        <button class="btn btn-default" type="submit">Pocket Request</button>
-                        <input type="hidden" name="redirect_uri" value="https://chrometopocket-anderson-mota.c9.io/"/>
-                        <input type="hidden" name="consumer_key" value="38238-3a41f1da78d6970fe24870f8"/>
-                    </form>
+                    {% endif %}
+                    
+                    <a href="/pocket-connect" class="btn btn-default pull-right">Pocket Authentication</a>
                 </div>
             </div>
         </div>
