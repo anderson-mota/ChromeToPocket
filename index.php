@@ -24,34 +24,41 @@ $app->get('/', function() use ($app) {
 })->bind('index');
 
 $app->get('/pocket-connect', function() use ($app, $pocket_config) {
-    $request_token = connect($pocket_config['consumer_key'], $pocket_config['redirect_uri']);
-    return $app->redirect("https://getpocket.com/auth/authorize?request_token={$request_token}&redirect_uri={$pocket_config['redirect_uri']}");
+	$redirect_uri = urlencode($pocket_config['redirect_uri']);
+    $request_token = connect($pocket_config['consumer_key'], $redirect_uri);
+    
+    $app['session']->set('request_token', $request_token);
+    return $app->redirect("https://getpocket.com/auth/authorize?request_token={$request_token}&redirect_uri={$redirect_uri}");
+    
 })->bind('connect');
 
-$app->get('/callback', function() use ($app, $app_url) {
-    $access_token = callback($app['request']->get('request_token'));
+$app->get('/callback', function() use ($app, $app_url, $pocket_config) {
+	
+	$request_token = $app['session']->get('request_token');
+    $access_token = callback($pocket_config['consumer_key'], $request_token);
+
     $app['session']->set('access_token', $access_token);
     return $app->redirect($app["url_generator"]->generate("index"));
+    
 })->bind('callback');
 
 /**
+ * @param string $consumer_key
  * @param string $request_token
  * @return string
  */
-function callback($request_token) {
+function callback($consumer_key, $request_token) {
+	if (empty($request_token)) {
+		throw new Exception("Undefined Token");
+	}
+	
 	$url = 'https://getpocket.com/v3/oauth/authorize';
 	$data = [
 		'consumer_key' => $consumer_key, 
 		'code' => $request_token
 	];
-	$options = [
-		'http' => [
-			'method'  => 'POST',
-			'content' => http_build_query($data)
-		]
-	];
-	$context  = stream_context_create($options);
-	$result = file_get_contents($url, false, $context);
+
+	$result = remotePOST($url, $data);
 	// our $result contains our access token
 	
 	$access_token = explode('&', $result);
@@ -71,19 +78,40 @@ function connect($consumer_key, $redirect_uri) {
 		'consumer_key' => $consumer_key, 
 		'redirect_uri' => $redirect_uri
 	];
-	$options = array(
-		'http' => [
-			'method'  => 'POST',
-			'content' => http_build_query($data)
-		]
-	);
-	$context  = stream_context_create($options);
-	$result = file_get_contents($url, false, $context);
+
+	$result = remotePOST($url, $data);
+
 	// our $result contains our request token
 	$code = explode('=', $result);
 	$request_token = $code[1];
 	
 	return $request_token;
+}
+
+function cURL($request_url, $params = []) {
+	//$request_url = 'https://www.eventbrite.com/oauth/token';
+	
+	$ch = curl_init();
+	curl_setopt($ch, CURLOPT_POST, TRUE);
+	curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
+	curl_setopt($ch, CURLOPT_URL, $request_url);
+	curl_setopt($ch, CURLOPT_HEADER, FALSE);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+	$response = curl_exec($ch);
+	curl_close($ch);
+	
+	return $response;
+}
+
+function remotePOST($request_url, $params = []) {
+	$options = [
+		'http' => [
+			'method'  => 'POST',
+			'content' => http_build_query($params)
+		]
+	];
+	$context  = stream_context_create($options);
+	return file_get_contents($request_url, false, $context);
 }
 
 $app->run();
